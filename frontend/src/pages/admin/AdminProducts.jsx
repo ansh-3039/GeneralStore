@@ -108,7 +108,6 @@ export default function AdminProducts() {
     try {
       const config = {
         headers: {
-          'Content-Type': 'multipart/form-data',
           Authorization: `Bearer ${adminInfo.token}`
         }
       };
