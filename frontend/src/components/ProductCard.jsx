@@ -1,10 +1,15 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
-import { Star, ShoppingCart } from 'lucide-react';
+import { Link, useNavigate } from 'react-router-dom';
+import { Star, ShoppingCart, ShoppingBag, ArrowRight } from 'lucide-react';
 import { useCartStore } from '../store/cartStore';
 
 export default function ProductCard({ product }) {
-  const addToCart = useCartStore(state => state.addToCart);
+  const navigate = useNavigate();
+  const cartItems = useCartStore((state) => state.cartItems);
+  const addToCart = useCartStore((state) => state.addToCart);
+
+  const cartItem = cartItems.find((item) => item._id === product._id);
+  const isInCart = cartItem && cartItem.qty > 0;
 
   const getImageUrl = (imagePath) => {
     if (!imagePath) return 'https://via.placeholder.com/300?text=No+Image';
@@ -12,9 +17,10 @@ export default function ProductCard({ product }) {
     return imagePath;
   };
 
-  const discountPercent = product.mrp > product.price 
-    ? Math.round(((product.mrp - product.price) / product.mrp) * 100)
-    : 0;
+  const discountPercent =
+    product.mrp > product.price
+      ? Math.round(((product.mrp - product.price) / product.mrp) * 100)
+      : 0;
 
   return (
     <div className="bg-white rounded-md border border-gray-200 hover:shadow-lg transition-shadow duration-200 flex flex-col justify-between overflow-hidden group">
@@ -27,7 +33,7 @@ export default function ProductCard({ product }) {
             className="object-contain max-h-full max-w-full group-hover:scale-105 transition-transform duration-300"
           />
           {discountPercent > 0 && (
-            <span className="absolute top-2 left-2 bg-green-600 text-white text-[10px] font-bold px-1.5 py-0.5 rounded">
+            <span className="absolute top-2 left-2 bg-green-600 text-white text-[10px] font-bold px-1.5 py-0.5 rounded shadow-sm">
               {discountPercent}% OFF
             </span>
           )}
@@ -68,20 +74,37 @@ export default function ProductCard({ product }) {
         </div>
       </Link>
 
-      {/* Add to Cart Action */}
+      {/* Add to Cart / Go to Cart Action */}
       <div className="p-2 pt-0">
-        <button
-          onClick={() => addToCart(product, 1)}
-          disabled={product.stock <= 0}
-          className={`w-full py-1.5 px-2 text-xs font-semibold rounded flex items-center justify-center gap-1.5 transition-colors ${
-            product.stock > 0
-              ? 'bg-yellow-400 hover:bg-yellow-500 text-gray-900'
-              : 'bg-gray-200 text-gray-400 cursor-not-allowed'
-          }`}
-        >
-          <ShoppingCart size={14} />
-          <span>Add to Cart</span>
-        </button>
+        {isInCart ? (
+          <button
+            onClick={(e) => {
+              e.preventDefault();
+              navigate('/cart');
+            }}
+            className="w-full py-1.5 px-2 text-xs font-bold rounded flex items-center justify-center gap-1.5 transition-colors bg-orange-500 hover:bg-orange-600 text-white shadow-sm"
+          >
+            <ShoppingBag size={14} />
+            <span>Go to Cart</span>
+            <ArrowRight size={12} />
+          </button>
+        ) : (
+          <button
+            onClick={(e) => {
+              e.preventDefault();
+              addToCart(product, 1);
+            }}
+            disabled={product.stock <= 0}
+            className={`w-full py-1.5 px-2 text-xs font-bold rounded flex items-center justify-center gap-1.5 transition-colors ${
+              product.stock > 0
+                ? 'bg-yellow-400 hover:bg-yellow-500 text-gray-900 shadow-sm'
+                : 'bg-gray-200 text-gray-400 cursor-not-allowed'
+            }`}
+          >
+            <ShoppingCart size={14} />
+            <span>Add to Cart</span>
+          </button>
+        )}
       </div>
     </div>
   );

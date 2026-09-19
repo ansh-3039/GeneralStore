@@ -81,7 +81,7 @@ export default function Home() {
             onClick={() => handleCategorySelect('')}
             className={`px-4 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-colors border ${
               !currentCategory
-                ? 'bg-blue-600 text-white border-blue-600'
+                ? 'bg-blue-600 text-white border-blue-600 shadow-sm'
                 : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
             }`}
           >
@@ -93,7 +93,7 @@ export default function Home() {
               onClick={() => handleCategorySelect(cat._id)}
               className={`px-4 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-colors border ${
                 currentCategory === cat._id
-                  ? 'bg-blue-600 text-white border-blue-600'
+                  ? 'bg-blue-600 text-white border-blue-600 shadow-sm'
                   : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
               }`}
             >
@@ -145,11 +145,23 @@ export default function Home() {
           </div>
         </div>
 
-        {/* Loading State */}
+        {/* Skeleton Buffering Loader Grid when Loading */}
         {loading && (
-          <div className="py-20 text-center">
-            <div className="w-10 h-10 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-3"></div>
-            <p className="text-gray-500 text-sm font-medium">Fetching best deals for you...</p>
+          <div className="space-y-4">
+            <div className="flex items-center justify-center gap-2 py-4 text-blue-600 font-semibold text-xs">
+              <div className="w-5 h-5 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+              <span>Fetching best deals for you...</span>
+            </div>
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2.5 sm:gap-4">
+              {[1, 2, 3, 4, 5, 6, 7, 8].map((n) => (
+                <div key={n} className="bg-white rounded-md p-3 border border-gray-200 animate-pulse space-y-3">
+                  <div className="bg-gray-200 aspect-square rounded-md w-full"></div>
+                  <div className="h-3 bg-gray-200 rounded w-3/4"></div>
+                  <div className="h-3 bg-gray-200 rounded w-1/2"></div>
+                  <div className="h-6 bg-gray-200 rounded w-full mt-2"></div>
+                </div>
+              ))}
+            </div>
           </div>
         )}
 
@@ -163,11 +175,9 @@ export default function Home() {
         {/* Empty State */}
         {!loading && !error && sortedProducts.length === 0 && (
           <div className="bg-white rounded-md p-10 text-center border border-gray-200 my-4">
-            <img 
-              src="https://via.placeholder.com/150?text=No+Products" 
-              alt="Empty" 
-              className="w-28 h-28 mx-auto opacity-50 mb-3" 
-            />
+            <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-3 text-gray-400">
+              <Sparkles size={32} />
+            </div>
             <h3 className="text-base font-bold text-gray-800">No products found</h3>
             <p className="text-xs text-gray-500 mt-1 mb-4">Try clearing filters or searching for something else.</p>
             <button
@@ -175,14 +185,14 @@ export default function Home() {
                 setSearchParams({});
                 handleCategorySelect('');
               }}
-              className="bg-blue-600 text-white text-xs font-semibold px-4 py-2 rounded hover:bg-blue-700"
+              className="bg-blue-600 text-white text-xs font-semibold px-4 py-2 rounded hover:bg-blue-700 shadow"
             >
               Reset Filters
             </button>
           </div>
         )}
 
-        {/* Flipkart Style Grid: 2 columns on mobile, 4 columns on desktop */}
+        {/* Flipkart Style Product Grid */}
         {!loading && !error && sortedProducts.length > 0 && (
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2.5 sm:gap-4">
             {sortedProducts.map((product) => (
@@ -237,7 +247,7 @@ export default function Home() {
                   handleCategorySelect('');
                   setIsFilterDrawerOpen(false);
                 }}
-                className="w-full bg-blue-600 text-white font-bold py-2 rounded text-xs"
+                className="w-full bg-blue-600 text-white font-bold py-2 rounded text-xs shadow"
               >
                 Apply Filters
               </button>

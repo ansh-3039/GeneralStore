@@ -1,13 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import axios from 'axios';
-import { Star, ShoppingCart, Zap, ShieldCheck, Truck, RotateCcw, Plus, Minus, ChevronRight } from 'lucide-react';
+import { Star, ShoppingCart, ShoppingBag, Zap, ShieldCheck, Truck, RotateCcw, Plus, Minus, ChevronRight, ArrowRight } from 'lucide-react';
 import { useCartStore } from '../../store/cartStore';
 import ProductCard from '../../components/ProductCard';
 
 export default function ProductDetails() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const cartItems = useCartStore((state) => state.cartItems);
   const addToCart = useCartStore((state) => state.addToCart);
 
   const [product, setProduct] = useState(null);
@@ -19,6 +20,9 @@ export default function ProductDetails() {
   const [qty, setQty] = useState(1);
   const [pincode, setPincode] = useState('');
   const [deliveryMsg, setDeliveryMsg] = useState('');
+
+  const cartItem = cartItems.find((item) => item?._id === id);
+  const isInCart = cartItem && cartItem.qty > 0;
 
   useEffect(() => {
     fetchProductDetails();
@@ -34,7 +38,6 @@ export default function ProductDetails() {
         setSelectedImage(0);
       }
 
-      // Fetch related products in same category
       if (res.data.category?._id) {
         const relatedRes = await axios.get(`/api/products?category=${res.data.category._id}`);
         setRelatedProducts(relatedRes.data.filter((p) => p._id !== id));
@@ -55,7 +58,9 @@ export default function ProductDetails() {
 
   const handleBuyNow = () => {
     if (product && product.stock > 0) {
-      addToCart(product, qty);
+      if (!isInCart) {
+        addToCart(product, qty);
+      }
       navigate('/checkout');
     }
   };
@@ -75,10 +80,23 @@ export default function ProductDetails() {
     return imagePath;
   };
 
+  // Skeleton Buffering Animation when Loading
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-100">
-        <div className="w-10 h-10 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+      <div className="min-h-screen bg-gray-100 py-6">
+        <div className="max-w-7xl mx-auto px-4">
+          <div className="bg-white rounded-md p-6 shadow-sm animate-pulse grid grid-cols-1 md:grid-cols-12 gap-6">
+            <div className="md:col-span-5 bg-gray-200 aspect-square rounded-md flex items-center justify-center">
+              <div className="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+            </div>
+            <div className="md:col-span-7 space-y-4">
+              <div className="h-6 bg-gray-200 rounded w-3/4"></div>
+              <div className="h-4 bg-gray-200 rounded w-1/4"></div>
+              <div className="h-10 bg-gray-200 rounded w-1/2"></div>
+              <div className="h-20 bg-gray-200 rounded w-full"></div>
+            </div>
+          </div>
+        </div>
       </div>
     );
   }
@@ -126,7 +144,7 @@ export default function ProductDetails() {
                 className="max-h-full max-w-full object-contain"
               />
               {discountPercent > 0 && (
-                <span className="absolute top-3 left-3 bg-green-600 text-white text-xs font-bold px-2 py-0.5 rounded">
+                <span className="absolute top-3 left-3 bg-green-600 text-white text-xs font-bold px-2 py-0.5 rounded shadow">
                   {discountPercent}% OFF
                 </span>
               )}
@@ -149,24 +167,36 @@ export default function ProductDetails() {
               </div>
             )}
 
-            {/* Desktop Action Buttons under image */}
+            {/* Desktop Action Buttons */}
             <div className="hidden md:grid grid-cols-2 gap-3 mt-2">
-              <button
-                onClick={handleAddToCart}
-                disabled={product.stock <= 0}
-                className={`py-3 px-4 rounded font-bold text-sm flex items-center justify-center gap-2 shadow-sm transition-colors ${
-                  product.stock > 0
-                    ? 'bg-yellow-400 hover:bg-yellow-500 text-gray-900'
-                    : 'bg-gray-200 text-gray-400 cursor-not-allowed'
-                }`}
-              >
-                <ShoppingCart size={18} />
-                <span>ADD TO CART</span>
-              </button>
+              {isInCart ? (
+                <button
+                  onClick={() => navigate('/cart')}
+                  className="py-3 px-4 rounded font-bold text-sm flex items-center justify-center gap-2 shadow transition-colors bg-orange-500 hover:bg-orange-600 text-white"
+                >
+                  <ShoppingBag size={18} />
+                  <span>GO TO CART</span>
+                  <ArrowRight size={14} />
+                </button>
+              ) : (
+                <button
+                  onClick={handleAddToCart}
+                  disabled={product.stock <= 0}
+                  className={`py-3 px-4 rounded font-bold text-sm flex items-center justify-center gap-2 shadow transition-colors ${
+                    product.stock > 0
+                      ? 'bg-yellow-400 hover:bg-yellow-500 text-gray-900'
+                      : 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                  }`}
+                >
+                  <ShoppingCart size={18} />
+                  <span>ADD TO CART</span>
+                </button>
+              )}
+
               <button
                 onClick={handleBuyNow}
                 disabled={product.stock <= 0}
-                className={`py-3 px-4 rounded font-bold text-sm flex items-center justify-center gap-2 shadow-sm transition-colors ${
+                className={`py-3 px-4 rounded font-bold text-sm flex items-center justify-center gap-2 shadow transition-colors ${
                   product.stock > 0
                     ? 'bg-orange-600 hover:bg-orange-700 text-white'
                     : 'bg-gray-200 text-gray-400 cursor-not-allowed'
@@ -226,7 +256,7 @@ export default function ProductDetails() {
               </div>
 
               {/* Quantity Selector */}
-              {product.stock > 0 && (
+              {product.stock > 0 && !isInCart && (
                 <div className="flex items-center gap-3 mb-6">
                   <span className="text-xs font-bold text-gray-700">Quantity:</span>
                   <div className="flex items-center border border-gray-300 rounded bg-white">
@@ -247,7 +277,7 @@ export default function ProductDetails() {
                 </div>
               )}
 
-              {/* Pincode / Delivery Check */}
+              {/* Delivery Check */}
               <div className="border-t border-b py-4 mb-4">
                 <h4 className="text-xs font-bold text-gray-700 uppercase tracking-wider mb-2 flex items-center gap-1.5">
                   <Truck size={16} className="text-blue-600" /> Delivery Options
@@ -301,24 +331,35 @@ export default function ProductDetails() {
 
             {/* Mobile Action Buttons Sticky Bottom */}
             <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-2 grid grid-cols-2 gap-2 z-40 shadow-lg">
-              <button
-                onClick={handleAddToCart}
-                disabled={product.stock <= 0}
-                className={`py-2.5 px-3 rounded font-bold text-xs flex items-center justify-center gap-1.5 ${
-                  product.stock > 0
-                    ? 'bg-yellow-400 text-gray-900'
-                    : 'bg-gray-200 text-gray-400 cursor-not-allowed'
-                }`}
-              >
-                <ShoppingCart size={16} />
-                <span>ADD TO CART</span>
-              </button>
+              {isInCart ? (
+                <button
+                  onClick={() => navigate('/cart')}
+                  className="py-2.5 px-3 rounded font-bold text-xs flex items-center justify-center gap-1.5 bg-orange-500 text-white shadow"
+                >
+                  <ShoppingBag size={16} />
+                  <span>GO TO CART</span>
+                </button>
+              ) : (
+                <button
+                  onClick={handleAddToCart}
+                  disabled={product.stock <= 0}
+                  className={`py-2.5 px-3 rounded font-bold text-xs flex items-center justify-center gap-1.5 ${
+                    product.stock > 0
+                      ? 'bg-yellow-400 text-gray-900 shadow'
+                      : 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                  }`}
+                >
+                  <ShoppingCart size={16} />
+                  <span>ADD TO CART</span>
+                </button>
+              )}
+
               <button
                 onClick={handleBuyNow}
                 disabled={product.stock <= 0}
                 className={`py-2.5 px-3 rounded font-bold text-xs flex items-center justify-center gap-1.5 ${
                   product.stock > 0
-                    ? 'bg-orange-600 text-white'
+                    ? 'bg-orange-600 text-white shadow'
                     : 'bg-gray-200 text-gray-400 cursor-not-allowed'
                 }`}
               >
@@ -329,7 +370,7 @@ export default function ProductDetails() {
           </div>
         </div>
 
-        {/* Related Products Carousel / Grid */}
+        {/* Similar Products */}
         {relatedProducts.length > 0 && (
           <div className="mt-8">
             <h2 className="text-base font-bold text-gray-900 mb-4">Similar Products</h2>
